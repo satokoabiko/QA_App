@@ -5,9 +5,10 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
-import androidx.appcompat.app.ActionBarDrawerToggle // 追加
-import androidx.core.view.GravityCompat // 追加
-import com.google.android.material.navigation.NavigationView // 追加
+import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.core.view.GravityCompat
+import com.google.android.material.navigation.NavigationView
+import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import jp.techacademy.satoko.abiko.qa_app.databinding.ActivityMainBinding
 
@@ -22,6 +23,30 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         setContentView(binding.root)
 
         setSupportActionBar(binding.content.toolbar)
+
+        // ----- 修正:ここから
+        binding.content.fab.setOnClickListener {
+            // ジャンルを選択していない場合はメッセージを表示するだけ
+            if (genre == 0) {
+                Snackbar.make(it, getString(R.string.question_no_select_genre), Snackbar.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
+            // ログイン済みのユーザーを取得する
+            val user = FirebaseAuth.getInstance().currentUser
+
+            // ログインしていなければログイン画面に遷移させる
+            if (user == null) {
+                val intent = Intent(applicationContext, LoginActivity::class.java)
+                startActivity(intent)
+            } else {
+                // ジャンルを渡して質問作成画面を起動する
+                val intent = Intent(applicationContext, QuestionSendActivity::class.java)
+                intent.putExtra("genre", genre)
+                startActivity(intent)
+            }
+        }
+        // ----- 修正:ここまで
 
         binding.content.fab.setOnClickListener {
             // ログイン済みのユーザーを取得する
@@ -57,13 +82,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        return when (item.itemId) {
-            R.id.action_settings -> true
-            else -> super.onOptionsItemSelected(item)
+        val id = item.itemId
+
+        if (id == R.id.action_settings) {
+            val intent = Intent(applicationContext, SettingActivity::class.java)
+            startActivity(intent)
+            return true
         }
+
+        return super.onOptionsItemSelected(item)
     }
 
     // ----- 追加:ここから
